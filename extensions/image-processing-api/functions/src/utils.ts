@@ -21,6 +21,8 @@ import * as fileType from 'file-type';
 import express from 'express';
 import a2a from 'a2a';
 import { AssertionError } from 'assert';
+import Color from 'color';
+
 
 /**
  * Keys in sharp file metadata that contain buffers. Used for
@@ -79,6 +81,7 @@ export function coerceStringToArray<T>(
     }
   });
 }
+
 
 export function omitUndefinedValues<T extends Record<string, unknown>>(
   object: T,
@@ -150,3 +153,13 @@ export async function fetchImageBufferFromUrl(url: string): Promise<Buffer> {
     message: `${errorMessage} The returned error was: ${possibleError.message}`,
   });
 }
+
+// Custom Color validator
+export const color = () => superstruct.define<Color>('Color', (value: any): value is Color => {
+  try {
+    Color(value);
+    return true;
+  } catch (error) {
+    return false;
+  }
+});

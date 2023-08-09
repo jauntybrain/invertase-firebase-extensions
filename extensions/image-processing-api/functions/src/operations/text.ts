@@ -21,6 +21,7 @@ import * as utils from '../utils';
 import { OperationBuilder } from '../types';
 import { imageBlend, imageGravity } from './types';
 import { AssertionError } from 'assert';
+import { color } from '../utils';
 
 /**
  * The user visible name of this operation.
@@ -57,9 +58,9 @@ const struct = superstruct.assign(
     ),
 
     /**
-     * Color of the rendered text.
+     * Color of the rendered text, in a CSS-legal format
      */
-    textColor: superstruct.defaulted(superstruct.string(), 'white'),
+    textColor: superstruct.defaulted(color(), 'white'),
 
     /**
      * Text stroke color - as a CSS color string.
