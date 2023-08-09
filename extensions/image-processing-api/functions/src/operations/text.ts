@@ -30,113 +30,197 @@ const name = 'text';
 /**
  * Add text onto an image, e.g. as a watermark.
  */
-// TODO 1) separate Sharp vs SVG options and combine via superstruct.assign()
-// TODO 2) bad `*Color` inputs can cause a server error (vs a 'bad request'), consider adding
-// TODO    https://www.npmjs.com/package/color and using it as a custom superstruct validator for colors
-const struct = superstruct.object({
-  operation: superstruct.literal(name),
+const struct = superstruct.assign(
+  /* Text SVG options */
+  superstruct.object({
+    operation: superstruct.literal(name),
 
-  /**
-   * A string of text that will be rendered over your image.
-   */
-  value: superstruct.string(),
+    /**
+     * A string of text that will be rendered over your image.
+     */
+    value: superstruct.string(),
 
-  /**
-   * A string representing the font size and family to use when rendering this text.
-   * e.g. `30px sans-serif`.
-   *
-   * Note only a few common fonts like `sans-serif` and `arial` are supported.
-   */
-  font: superstruct.defaulted(superstruct.string(), '30px sans-serif'),
+    /**
+     * A string representing the font size and family to use when rendering this text.
+     * e.g. `30px sans-serif`.
+     *
+     * Note only a few common fonts like `sans-serif` and `arial` are supported.
+     */
+    font: superstruct.defaulted(superstruct.string(), '30px sans-serif'),
 
-  /**
-   * Text alignment of the rendered text, e.g. 'left'.
-   */
-  // TODO bad code in `text-svg` which introduced wrapping support broke text alignment
-  textAlign: superstruct.optional(
-    superstruct.enums(['left', 'center', 'right']),
-  ),
+    /**
+     * Text alignment of the rendered text, e.g. 'left'.
+     */
+    // TODO bad code in `text-svg` which introduced wrapping support broke text alignment
+    textAlign: superstruct.optional(
+      superstruct.enums(['left', 'center', 'right']),
+    ),
 
-  /**
-   * Color of the rendered text.
-   */
-  textColor: superstruct.defaulted(superstruct.string(), 'white'),
+    /**
+     * Color of the rendered text.
+     */
+    textColor: superstruct.defaulted(superstruct.string(), 'white'),
 
-  /**
-   * Text stroke color - as a CSS color string.
-   */
-  backgroundColor: superstruct.optional(superstruct.string()),
+    /**
+     * Text stroke color - as a CSS color string.
+     */
+    backgroundColor: superstruct.optional(superstruct.string()),
 
-  /**
-   * Outline/stroke width around the text.
-   */
-  strokeWidth: superstruct.defaulted(
-    utils.coerceStringToInt(superstruct.min(superstruct.integer(), 0)),
-    0,
-  ),
+    /**
+     * Outline/stroke width around the text.
+     */
+    strokeWidth: superstruct.defaulted(
+      utils.coerceStringToInt(superstruct.min(superstruct.integer(), 0)),
+      0,
+    ),
 
-  /**
-   * Text stroke color - as a CSS color string.
-   */
-  strokeColor: superstruct.defaulted(superstruct.string(), 'white'),
+    /**
+     * Text stroke color - as a CSS color string.
+     */
+    strokeColor: superstruct.defaulted(superstruct.string(), 'white'),
 
-  /**
-   * Padding in pixels to apply all around the text.
-   */
-  padding: superstruct.defaulted(
-    utils.coerceStringToInt(superstruct.min(superstruct.integer(), 0)),
-    0,
-  ),
+    /**
+     * Padding in pixels to apply all around the text.
+     */
+    padding: superstruct.defaulted(
+      utils.coerceStringToInt(superstruct.min(superstruct.integer(), 0)),
+      0,
+    ),
 
-  /**
-   * Width of the border to apply, or 0 (default) for no border.
-   */
-  borderWidth: superstruct.defaulted(
-    utils.coerceStringToInt(superstruct.min(superstruct.integer(), 0)),
-    0,
-  ),
+    /**
+     * Width of the border to apply, or 0 (default) for no border.
+     */
+    borderWidth: superstruct.defaulted(
+      utils.coerceStringToInt(superstruct.min(superstruct.integer(), 0)),
+      0,
+    ),
 
-  /**
-   * Border color - as a CSS color string.
-   */
-  borderColor: superstruct.defaulted(superstruct.string(), 'black'),
+    /**
+     * Border color - as a CSS color string.
+     */
+    borderColor: superstruct.defaulted(superstruct.string(), 'black'),
 
-  /**
-   * Should text be wrapped. Use with `maxWidth` to control line length wrapping.
-   */
-  // TODO bad code in `text-svg` actually prevents us from turning wrapping off
-  wrap: superstruct.optional(utils.coerceStringToBoolean()),
+    /**
+     * Should text be wrapped. Use with `maxWidth` to control line length wrapping.
+     */
+    // TODO bad code in `text-svg` actually prevents us from turning wrapping off
+    wrap: superstruct.optional(utils.coerceStringToBoolean()),
 
-  /**
-   * Max line width before text should be wrapped.
-   * Wrapping only occurs if `wrap` is set to true.
-   */
-  maxWidth: superstruct.defaulted(
-    utils.coerceStringToInt(superstruct.min(superstruct.integer(), 0)),
-    50,
-  ),
+    /**
+     * Max line width before text should be wrapped.
+     * Wrapping only occurs if `wrap` is set to true.
+     */
+    maxWidth: superstruct.defaulted(
+      utils.coerceStringToInt(superstruct.min(superstruct.integer(), 0)),
+      50,
+    ),
+  }),
+  /* Sharp options */
+  superstruct.object({
+    operation: superstruct.literal(name),
 
-  /**
-   * How to blend this image with the image.
-   * Defaults to 'over'.
-   */
-  blend: superstruct.defaulted(superstruct.enums([...imageBlend]), 'over'),
+    /**
+     * A string of text that will be rendered over your image.
+     */
+    value: superstruct.string(),
 
-  /**
-   * Gravity at which to place the overlay. (optional, default 'centre').
-   */
-  gravity: superstruct.optional(superstruct.enums([...imageGravity])),
+    /**
+     * A string representing the font size and family to use when rendering this text.
+     * e.g. `30px sans-serif`.
+     *
+     * Note only a few common fonts like `sans-serif` and `arial` are supported.
+     */
+    font: superstruct.defaulted(superstruct.string(), '30px sans-serif'),
 
-  /**
-   * Zero-indexed offset in pixels from the top edge.
-   */
-  top: superstruct.optional(utils.coerceStringToInt(superstruct.integer())),
+    /**
+     * Text alignment of the rendered text, e.g. 'left'.
+     */
+    // TODO bad code in `text-svg` which introduced wrapping support broke text alignment
+    textAlign: superstruct.optional(
+      superstruct.enums(['left', 'center', 'right']),
+    ),
 
-  /**
-   * Zero-indexed offset in pixels from the left edge.
-   */
-  left: superstruct.optional(utils.coerceStringToInt(superstruct.integer())),
-});
+    /**
+     * Color of the rendered text.
+     */
+    textColor: superstruct.defaulted(superstruct.string(), 'white'),
+
+    /**
+     * Text stroke color - as a CSS color string.
+     */
+    backgroundColor: superstruct.optional(superstruct.string()),
+
+    /**
+     * Outline/stroke width around the text.
+     */
+    strokeWidth: superstruct.defaulted(
+      utils.coerceStringToInt(superstruct.min(superstruct.integer(), 0)),
+      0,
+    ),
+
+    /**
+     * Text stroke color - as a CSS color string.
+     */
+    strokeColor: superstruct.defaulted(superstruct.string(), 'white'),
+
+    /**
+     * Padding in pixels to apply all around the text.
+     */
+    padding: superstruct.defaulted(
+      utils.coerceStringToInt(superstruct.min(superstruct.integer(), 0)),
+      0,
+    ),
+
+    /**
+     * Width of the border to apply, or 0 (default) for no border.
+     */
+    borderWidth: superstruct.defaulted(
+      utils.coerceStringToInt(superstruct.min(superstruct.integer(), 0)),
+      0,
+    ),
+
+    /**
+     * Border color - as a CSS color string.
+     */
+    borderColor: superstruct.defaulted(superstruct.string(), 'black'),
+
+    /**
+     * Should text be wrapped. Use with `maxWidth` to control line length wrapping.
+     */
+    // TODO bad code in `text-svg` actually prevents us from turning wrapping off
+    wrap: superstruct.optional(utils.coerceStringToBoolean()),
+
+    /**
+     * Max line width before text should be wrapped.
+     * Wrapping only occurs if `wrap` is set to true.
+     */
+    maxWidth: superstruct.defaulted(
+      utils.coerceStringToInt(superstruct.min(superstruct.integer(), 0)),
+      50,
+    ),
+
+    /**
+     * How to blend this image with the image.
+     * Defaults to 'over'.
+     */
+    blend: superstruct.defaulted(superstruct.enums([...imageBlend]), 'over'),
+
+    /**
+     * Gravity at which to place the overlay. (optional, default 'centre').
+     */
+    gravity: superstruct.optional(superstruct.enums([...imageGravity])),
+
+    /**
+     * Zero-indexed offset in pixels from the top edge.
+     */
+    top: superstruct.optional(utils.coerceStringToInt(superstruct.integer())),
+
+    /**
+     * Zero-indexed offset in pixels from the left edge.
+     */
+    left: superstruct.optional(utils.coerceStringToInt(superstruct.integer())),
+  })
+);
 
 export type OperationText = superstruct.Infer<typeof struct>;
 
